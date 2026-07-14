@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VI Printing - Portal Aplikasi</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons untuk ikon-ikon modern -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* gray-100 */
+        }
+        
+        /* Animasi masuk untuk kartu aplikasi */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .app-card {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        /* Menyembunyikan scrollbar tapi tetap bisa scroll */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen flex flex-col">
+
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="bg-indigo-600 text-white p-2 rounded-lg">
+                    <i class="ph ph-squares-four text-xl"></i>
+                </div>
+                <h1 class="font-bold text-xl text-gray-900 tracking-tight">VI Printing</h1>
+            </div>
+            <div>
+                <button onclick="openModal()" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
+                    <i class="ph ph-plus-circle text-lg"></i>
+                    <span class="hidden sm:inline">Tambah Shortcut</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        <!-- Header Halaman & Pencarian -->
+        <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Aplikasi VI Printing</h2>
+                <p class="text-gray-500 text-sm mt-1">Akses cepat ke semua proyek dan aplikasi dari VI Printing.</p>
+            </div>
+            
+            <div class="relative w-full sm:w-72">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="ph ph-magnifying-glass text-gray-400 text-lg"></i>
+                </div>
+                <input type="text" id="searchInput" onkeyup="filterApps()" placeholder="Cari aplikasi..." 
+                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all shadow-sm">
+            </div>
+        </div>
+
+        <!-- Grid Container untuk Kartu Aplikasi -->
+        <div id="appGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Kartu akan di-render di sini oleh JavaScript -->
+        </div>
+
+        <!-- State Kosong (Ditampilkan jika tidak ada aplikasi) -->
+        <div id="emptyState" class="hidden flex-col items-center justify-center py-16 text-center">
+            <div class="bg-gray-100 p-6 rounded-full mb-4">
+                <i class="ph ph-folder-open text-4xl text-gray-400"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900">Belum ada aplikasi</h3>
+            <p class="text-gray-500 mt-1 max-w-sm">Anda belum menambahkan shortcut aplikasi apapun. Klik tombol "Tambah Shortcut" untuk memulai.</p>
+            <button onclick="openModal()" class="mt-4 text-indigo-600 font-medium hover:text-indigo-800">
+                + Tambah Aplikasi Pertama
+            </button>
+        </div>
+    </main>
+
+    <div id="appModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeModal()"></div>
+
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+                
+                <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                    <form id="appForm" onsubmit="saveApp(event)">
+                        <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                            <div class="sm:flex sm:items-start">
+                                <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                                    <h3 class="text-lg font-semibold leading-6 text-gray-900 mb-4" id="modal-title">Tambah Shortcut Aplikasi</h3>
+                                    
+                                    <div class="space-y-4">
+                                        <!-- Input Nama -->
+                                        <div>
+                                            <label for="appName" class="block text-sm font-medium text-gray-700 mb-1">Nama Aplikasi *</label>
+                                            <input type="text" id="appName" required placeholder="Contoh: Sistem Kasir v2" 
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                                        </div>
+                                        
+                                        <!-- Input URL -->
+                                        <div>
+                                            <label for="appUrl" class="block text-sm font-medium text-gray-700 mb-1">Link / URL Aplikasi *</label>
+                                            <input type="url" id="appUrl" required placeholder="https://kasir.domainanda.com" 
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                                        </div>
+
+                                        <!-- Input Deskripsi -->
+                                        <div>
+                                            <label for="appDesc" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Singkat</label>
+                                            <textarea id="appDesc" rows="2" placeholder="Aplikasi untuk manajemen stok dan penjualan..." 
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm resize-none"></textarea>
+                                        </div>
+
+                                        <!-- Pilihan Warna -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Tema Warna Ikon</label>
+                                            <div class="flex gap-3" id="colorSelector">
+                                                <!-- Radio buttons untuk warna (diatur di JS) -->
+                                                <label class="cursor-pointer">
+                                                    <input type="radio" name="appColor" value="blue" checked class="peer sr-only">
+                                                    <div class="w-8 h-8 rounded-full bg-blue-500 ring-2 ring-offset-2 ring-transparent peer-checked:ring-blue-500 transition-all"></div>
+                                                </label>
+                                                <label class="cursor-pointer">
+                                                    <input type="radio" name="appColor" value="green" class="peer sr-only">
+                                                    <div class="w-8 h-8 rounded-full bg-green-500 ring-2 ring-offset-2 ring-transparent peer-checked:ring-green-500 transition-all"></div>
+                                                </label>
+                                                <label class="cursor-pointer">
+                                                    <input type="radio" name="appColor" value="purple" class="peer sr-only">
+                                                    <div class="w-8 h-8 rounded-full bg-purple-500 ring-2 ring-offset-2 ring-transparent peer-checked:ring-purple-500 transition-all"></div>
+                                                </label>
+                                                <label class="cursor-pointer">
+                                                    <input type="radio" name="appColor" value="red" class="peer sr-only">
+                                                    <div class="w-8 h-8 rounded-full bg-red-500 ring-2 ring-offset-2 ring-transparent peer-checked:ring-red-500 transition-all"></div>
+                                                </label>
+                                                <label class="cursor-pointer">
+                                                    <input type="radio" name="appColor" value="orange" class="peer sr-only">
+                                                    <div class="w-8 h-8 rounded-full bg-orange-500 ring-2 ring-offset-2 ring-transparent peer-checked:ring-orange-500 transition-all"></div>
+                                                </label>
+                                                <label class="cursor-pointer">
+                                                    <input type="radio" name="appColor" value="slate" class="peer sr-only">
+                                                    <div class="w-8 h-8 rounded-full bg-slate-800 ring-2 ring-offset-2 ring-transparent peer-checked:ring-slate-800 transition-all"></div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                            <button type="submit" class="inline-flex w-full justify-center rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 sm:ml-3 sm:w-auto">Simpan Shortcut</button>
+                            <button type="button" onclick="closeModal()" class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Batal</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Konfigurasi Warna Tailwind yang dipetakan
+        const colorMap = {
+            blue: 'bg-blue-50 text-blue-600 border-blue-200 hover:border-blue-300',
+            green: 'bg-green-50 text-green-600 border-green-200 hover:border-green-300',
+            purple: 'bg-purple-50 text-purple-600 border-purple-200 hover:border-purple-300',
+            red: 'bg-red-50 text-red-600 border-red-200 hover:border-red-300',
+            orange: 'bg-orange-50 text-orange-600 border-orange-200 hover:border-orange-300',
+            slate: 'bg-slate-100 text-slate-700 border-slate-300 hover:border-slate-400'
+        };
+
+        const iconMap = {
+            blue: 'ph-globe',
+            green: 'ph-leaf',
+            purple: 'ph-code',
+            red: 'ph-rocket-launch',
+            orange: 'ph-lightning',
+            slate: 'ph-terminal-window'
+        };
+
+        // Data awal (dummy data) jika belum ada di localStorage
+        const defaultApps = [
+            {
+                id: '1',
+                name: 'Laporan Absensi',
+                url: 'https://muflihprint-design.github.io/laporan.absensi/',
+                desc: 'Aplikasi untuk mengelola dan merekap laporan kehadiran.',
+                color: 'blue',
+                createdAt: new Date().getTime()
+            },
+            {
+                id: '2',
+                name: 'Sistem Kasir',
+                url: 'https://muflihprint-design.github.io/kasir-projek/',
+                desc: 'Sistem point of sale (POS) untuk manajemen transaksi harian.',
+                color: 'green',
+                createdAt: new Date().getTime() - 1000
+            },
+            {
+                id: '3',
+                name: 'Katalog & Stok',
+                url: 'https://muflihprint-design.github.io/stok-katalog/',
+                desc: 'Manajemen stok barang dan tampilan katalog produk.',
+                color: 'orange',
+                createdAt: new Date().getTime() - 2000
+            },
+            {
+                id: '4',
+                name: 'Orderflow',
+                url: 'https://muflihprint-design.github.io/Orderflow/',
+                desc: 'Aplikasi manajemen alur pesanan atau order flow.',
+                color: 'purple',
+                createdAt: new Date().getTime() - 3000
+            },
+            {
+                id: '5',
+                name: 'Slip Gaji',
+                url: 'https://muflihprint-design.github.io/slipgaji/',
+                desc: 'Aplikasi untuk mencetak dan mengelola dokumen slip gaji.',
+                color: 'slate',
+                createdAt: new Date().getTime() - 4000
+            },
+            {
+                id: '6',
+                name: 'Hitung Gaji',
+                url: 'https://muflihprint-design.github.io/hitung.gaji/',
+                desc: 'Kalkulator dan sistem rekapitulasi perhitungan gaji.',
+                color: 'blue',
+                createdAt: new Date().getTime() - 5000
+            },
+            {
+                id: '7',
+                name: 'Sistem Bendahara',
+                url: 'https://muflihprint-design.github.io/bendahara/',
+                desc: 'Aplikasi pencatatan keuangan dan pembukuan bendahara.',
+                color: 'red',
+                createdAt: new Date().getTime() - 6000
+            }
+        ];
+
+        // State Aplikasi
+        let myApps = [];
+
+        function init() {
+            // Ambil data dari localStorage atau gunakan default
+            // Key diubah ke myAppsShortcut_v2 agar update data terbaru Anda langsung muncul
+            const storedApps = localStorage.getItem('myAppsShortcut_v2');
+            if (storedApps) {
+                myApps = JSON.parse(storedApps);
+            } else {
+                myApps = defaultApps;
+                saveToLocalStorage();
+            }
+            renderApps();
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('myAppsShortcut_v2', JSON.stringify(myApps));
+        }
+
+        function renderApps(filterText = '') {
+            const grid = document.getElementById('appGrid');
+            const emptyState = document.getElementById('emptyState');
+            
+            grid.innerHTML = ''; // Bersihkan grid
+
+            // Filter data
+            const filteredApps = myApps.filter(app => 
+                app.name.toLowerCase().includes(filterText.toLowerCase()) || 
+                app.desc.toLowerCase().includes(filterText.toLowerCase())
+            );
+
+            // Urutkan berdasarkan yang paling baru
+            filteredApps.sort((a, b) => b.createdAt - a.createdAt);
+
+            if (filteredApps.length === 0) {
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                // Jika sedang mencari tapi tidak ketemu, ubah teks empty state
+                if (filterText !== '') {
+                    emptyState.querySelector('h3').textContent = 'Pencarian tidak ditemukan';
+                    emptyState.querySelector('p').textContent = `Tidak ada aplikasi yang cocok dengan "${filterText}".`;
+                    emptyState.querySelector('button').classList.add('hidden');
+                } else {
+                    emptyState.querySelector('h3').textContent = 'Belum ada aplikasi';
+                    emptyState.querySelector('p').textContent = 'Anda belum menambahkan shortcut aplikasi apapun.';
+                    emptyState.querySelector('button').classList.remove('hidden');
+                }
+            } else {
+                grid.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+
+                // Render setiap kartu
+                filteredApps.forEach((app, index) => {
+                    const cardTheme = colorMap[app.color] || colorMap['blue'];
+                    const iconClass = iconMap[app.color] || iconMap['blue'];
+                    
+                    const cardHTML = `
+                        <div class="app-card bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col h-full group" style="animation-delay: ${index * 0.05}s">
+                            
+                            <!-- Header Kartu -->
+                            <div class="p-5 flex-grow">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="w-12 h-12 rounded-lg flex items-center justify-center text-2xl ${cardTheme}">
+                                        <i class="ph ${iconClass}"></i>
+                                    </div>
+                                    <button onclick="deleteApp('${app.id}')" class="text-gray-400 hover:text-red-500 transition-colors" title="Hapus Shortcut">
+                                        <i class="ph ph-trash text-lg"></i>
+                                    </button>
+                                </div>
+                                
+                                <h3 class="text-lg font-bold text-gray-900 mb-1 line-clamp-1" title="${app.name}">${app.name}</h3>
+                                <p class="text-sm text-gray-500 line-clamp-2" title="${app.desc}">${app.desc || 'Tidak ada deskripsi.'}</p>
+                            </div>
+                            
+                            <!-- Footer Kartu (Tombol) -->
+                            <div class="px-5 pb-5 pt-2 mt-auto">
+                                <a href="${app.url}" target="_blank" rel="noopener noreferrer" 
+                                   class="flex items-center justify-center w-full py-2.5 px-4 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium text-sm rounded-lg border border-gray-200 transition-colors group-hover:bg-indigo-50 group-hover:text-indigo-700 group-hover:border-indigo-200">
+                                    Buka Aplikasi
+                                    <i class="ph ph-arrow-up-right ml-2"></i>
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                    grid.insertAdjacentHTML('beforeend', cardHTML);
+                });
+            }
+        }
+
+        function filterApps() {
+            const searchInput = document.getElementById('searchInput').value;
+            renderApps(searchInput);
+        }
+
+        function deleteApp(id) {
+            // Menggunakan custom confirm (browser default confirm sangat dilarang oleh prompt)
+            // Sebagai ganti alert/confirm, kita buat manipulasi state langsung atau bisa buat custom dialog.
+            // Untuk kesederhanaan UX, kita akan langsung hapus, namun memberikan efek visual.
+            const appName = myApps.find(a => a.id === id)?.name;
+            
+            // Render UI penghapusan halus (menghindari confirm() standard)
+            myApps = myApps.filter(app => app.id !== id);
+            saveToLocalStorage();
+            
+            // Beri tahu pengguna (Bisa di-expand menjadi toast notification)
+            console.log(`Aplikasi ${appName} dihapus.`);
+            
+            // Re-render tapi pertahankan kata pencarian jika ada
+            const searchInput = document.getElementById('searchInput').value;
+            renderApps(searchInput);
+        }
+
+        // Kontrol Modal
+        const modal = document.getElementById('appModal');
+        const form = document.getElementById('appForm');
+
+        function openModal() {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Mencegah scroll di background
+            document.getElementById('appName').focus();
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            form.reset(); // Bersihkan form
+        }
+
+        function saveApp(e) {
+            e.preventDefault(); // Mencegah reload halaman
+            
+            const name = document.getElementById('appName').value;
+            let url = document.getElementById('appUrl').value;
+            const desc = document.getElementById('appDesc').value;
+            
+            // Ambil warna yang dipilih
+            const colorOption = document.querySelector('input[name="appColor"]:checked').value;
+
+            // Pastikan URL valid (jika user lupa http://)
+            if (!url.match(/^https?:\/\//i)) {
+                url = 'https://' + url;
+            }
+
+            const newApp = {
+                id: Date.now().toString(), // ID unik berdasarkan timestamp
+                name: name,
+                url: url,
+                desc: desc,
+                color: colorOption,
+                createdAt: Date.now()
+            };
+
+            myApps.push(newApp);
+            saveToLocalStorage();
+            
+            closeModal();
+            
+            // Reset pencarian & re-render
+            document.getElementById('searchInput').value = '';
+            renderApps();
+        }
+
+        // Jalankan inisialisasi saat halaman dimuat
+        window.onload = init;
+    </script>
+</body>
+</html>

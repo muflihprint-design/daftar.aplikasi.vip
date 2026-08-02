@@ -315,6 +315,24 @@
                 color: 'purple',
                 type: 'folder',
                 createdAt: new Date().getTime() - 9000
+            },
+            {
+                id: '11',
+                name: 'Input Katalog',
+                url: 'https://muflihprint-design.github.io/inputkatalog/',
+                desc: 'Sistem untuk menambahkan dan mengelola data katalog.',
+                color: 'blue',
+                type: 'app',
+                createdAt: new Date().getTime() - 10000
+            },
+            {
+                id: '12',
+                name: 'Absensi',
+                url: 'https://muflihprint-design.github.io/absensi/',
+                desc: 'Aplikasi untuk pencatatan absensi pegawai.',
+                color: 'green',
+                type: 'app',
+                createdAt: new Date().getTime() - 11000
             }
         ];
 
@@ -322,8 +340,8 @@
         let myApps = [];
 
         function init() {
-            // Gunakan versi storage baru (_v4) agar menerapkan pembagian folder vs app
-            const storedApps = localStorage.getItem('myAppsShortcut_v4');
+            // Mengubah penyimpanan menjadi v5 agar pembaruan di defaultApps langsung dimuat ulang
+            const storedApps = localStorage.getItem('myAppsShortcut_v5');
             if (storedApps) {
                 myApps = JSON.parse(storedApps);
             } else {
@@ -334,7 +352,7 @@
         }
 
         function saveToLocalStorage() {
-            localStorage.setItem('myAppsShortcut_v4', JSON.stringify(myApps));
+            localStorage.setItem('myAppsShortcut_v5', JSON.stringify(myApps));
         }
 
         function createCardHTML(item, index) {
